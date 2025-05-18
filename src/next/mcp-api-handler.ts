@@ -157,6 +157,7 @@ function deriveEndpointsFromBasePath(basePath: string, nextAppBasePath?: string)
   streamableHttpEndpoint: string;
   sseEndpoint: string;
   sseMessageEndpoint: string;
+  sseTransportEndpoint: string;
 } {
   // Remove trailing slash if present
   const normalizedBasePath = basePath.replace(/\/$/, "");
@@ -165,7 +166,8 @@ function deriveEndpointsFromBasePath(basePath: string, nextAppBasePath?: string)
   return {
     streamableHttpEndpoint: `${normalizedBasePath}/mcp`,
     sseEndpoint: `${normalizedBasePath}/sse`,
-    sseMessageEndpoint: `${normalizedNextAppBasePath}${normalizedBasePath}/message`,
+    sseMessageEndpoint: `${normalizedBasePath}/message`,
+    sseTransportEndpoint: `${normalizedNextAppBasePath}${normalizedBasePath}/message`,
   };
 }
 /**
@@ -184,9 +186,10 @@ export function calculateEndpoints({
     streamableHttpEndpoint: fullStreamableHttpEndpoint,
     sseEndpoint: fullSseEndpoint,
     sseMessageEndpoint: fullSseMessageEndpoint,
+    sseTransportEndpoint: fullSseTransportEndpoint
   } = basePath != null
-    ? deriveEndpointsFromBasePath(basePath, nextAppBasePath)
-    : {
+      ? deriveEndpointsFromBasePath(basePath, nextAppBasePath)
+      : {
         streamableHttpEndpoint,
         sseEndpoint,
         sseMessageEndpoint,
@@ -196,6 +199,7 @@ export function calculateEndpoints({
     streamableHttpEndpoint: fullStreamableHttpEndpoint,
     sseEndpoint: fullSseEndpoint,
     sseMessageEndpoint: fullSseMessageEndpoint,
+    sseTransportEndpoint: fullSseTransportEndpoint || fullSseMessageEndpoint,
   };
 }
 
@@ -260,7 +264,7 @@ export function initializeMcpApiHandler(
   } = config;
 
   // If basePath is provided, derive endpoints from it
-  const { streamableHttpEndpoint, sseEndpoint, sseMessageEndpoint } =
+  const { streamableHttpEndpoint, sseEndpoint, sseMessageEndpoint, sseTransportEndpoint } =
     calculateEndpoints({
       basePath,
       nextAppBasePath: nextAppBasePath,
@@ -386,7 +390,7 @@ export function initializeMcpApiHandler(
       });
       logger.log("Got new SSE connection");
       assert(sseMessageEndpoint, "sseMessageEndpoint is required");
-      const transport = new SSEServerTransport(sseMessageEndpoint, res);
+      const transport = new SSEServerTransport(sseTransportEndpoint || sseMessageEndpoint, res);
       const sessionId = transport.sessionId;
 
       const eventRes = new EventEmittingResponse(
