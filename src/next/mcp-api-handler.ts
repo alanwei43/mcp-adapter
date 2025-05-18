@@ -111,6 +111,36 @@ export type Config = {
    */
   basePath?: string;
   /**
+   * the `basePath` value in `next.config.js` configuration file.
+   * 
+   * Assume your MCP server route file path is `src/app/mcp/[transport]/route.ts`,
+   * and the `next.config.js` is:
+   * ```javascript
+   * module.exports = { "basePath": "/app1" }
+   * ```
+   * 
+   * then the correct MCP config is:
+   * ```json
+   * {
+   *    "basePath": "/mcp",
+   *    "nextAppBasePath": "/app1",
+   * }
+   * ```
+   * 
+   * In fact, your MCP server configuration should is: 
+   * ```json
+   * {
+   *   "mcpServers": {
+   *     "mcp-services": {
+   *       "type": "sse",
+   *       "url": "http://localhost:3000/app1/mcp/sse"
+   *     }
+   *   }
+   * }
+   * ```
+   */
+  nextAppBasePath?: string
+  /**
    * Callback function that receives MCP events.
    * This can be used to track analytics, debug issues, or implement custom behaviors.
    */
@@ -120,20 +150,22 @@ export type Config = {
 /**
  * Derives MCP endpoints from a base path.
  * @param basePath - The base path to derive endpoints from
+ * @param nextAppBasePath - The `next.config.js` config `basePath`
  * @returns An object containing the derived endpoints
  */
-function deriveEndpointsFromBasePath(basePath: string): {
+function deriveEndpointsFromBasePath(basePath: string, nextAppBasePath?: string): {
   streamableHttpEndpoint: string;
   sseEndpoint: string;
   sseMessageEndpoint: string;
 } {
   // Remove trailing slash if present
   const normalizedBasePath = basePath.replace(/\/$/, "");
+  const normalizedNextAppBasePath = nextAppBasePath ? nextAppBasePath.replace(/\/$/, "") : ""
 
   return {
     streamableHttpEndpoint: `${normalizedBasePath}/mcp`,
     sseEndpoint: `${normalizedBasePath}/sse`,
-    sseMessageEndpoint: `${normalizedBasePath}/message`,
+    sseMessageEndpoint: `${normalizedNextAppBasePath}${normalizedBasePath}/message`,
   };
 }
 /**
@@ -143,6 +175,7 @@ function deriveEndpointsFromBasePath(basePath: string): {
  */
 export function calculateEndpoints({
   basePath,
+  nextAppBasePath,
   streamableHttpEndpoint = "/mcp",
   sseEndpoint = "/sse",
   sseMessageEndpoint = "/message",
@@ -152,7 +185,7 @@ export function calculateEndpoints({
     sseEndpoint: fullSseEndpoint,
     sseMessageEndpoint: fullSseMessageEndpoint,
   } = basePath != null
-    ? deriveEndpointsFromBasePath(basePath)
+    ? deriveEndpointsFromBasePath(basePath, nextAppBasePath)
     : {
         streamableHttpEndpoint,
         sseEndpoint,
@@ -218,6 +251,7 @@ export function initializeMcpApiHandler(
   const {
     redisUrl,
     basePath,
+    nextAppBasePath,
     streamableHttpEndpoint: explicitStreamableHttpEndpoint,
     sseEndpoint: explicitSseEndpoint,
     sseMessageEndpoint: explicitSseMessageEndpoint,
@@ -229,6 +263,7 @@ export function initializeMcpApiHandler(
   const { streamableHttpEndpoint, sseEndpoint, sseMessageEndpoint } =
     calculateEndpoints({
       basePath,
+      nextAppBasePath: nextAppBasePath,
       streamableHttpEndpoint: explicitStreamableHttpEndpoint,
       sseEndpoint: explicitSseEndpoint,
       sseMessageEndpoint: explicitSseMessageEndpoint,
