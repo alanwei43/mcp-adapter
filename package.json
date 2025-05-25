@@ -22,10 +22,10 @@
   "repository": {
     "directory": "packages/mcp-adapter",
     "type": "git",
-    "url": "git+https://github.com/vercel/mcp-adapter.git"
+    "url": "git+https://github.com/alanwei43/mcp-adapter.git"
   },
   "bugs": {
-    "url": "https://github.com/vercel/mcp-adapter/issues"
+    "url": "https://github.com/alanwei43/mcp-adapter/issues"
   },
   "scripts": {
     "build": "tsup",
