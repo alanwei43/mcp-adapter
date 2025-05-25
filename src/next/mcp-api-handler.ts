@@ -587,7 +587,7 @@ export function initializeMcpApiHandler(
       await redis.subscribe(
         `responses:${sessionId}:${requestId}`,
         (message) => {
-          clearTimeout(timeout);
+          if (timeout) { clearTimeout(timeout); }
           const response = JSON.parse(message) as {
             status: number;
             body: string;
