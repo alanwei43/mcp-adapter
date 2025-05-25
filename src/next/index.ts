@@ -11,7 +11,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
  * @returns A function that can be used to handle MCP requests.
  */
 export default function createMcpRouteHandler(
-  initializeServer: (server: McpServer) => void,
+  initializeServer: (server: McpServer, req?: Request) => void,
   serverOptions?: ServerOptions,
   config?: Config
 ): (request: Request) => Promise<Response> {
