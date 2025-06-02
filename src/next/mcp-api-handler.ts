@@ -390,7 +390,8 @@ export function initializeMcpApiHandler(
       });
       logger.log("Got new SSE connection");
       assert(sseMessageEndpoint, "sseMessageEndpoint is required");
-      const transport = new SSEServerTransport(sseTransportEndpoint || sseMessageEndpoint, res);
+      const endpointPath = sseTransportEndpoint || sseMessageEndpoint;
+      const transport = new SSEServerTransport(endpointPath, res);
       const sessionId = transport.sessionId;
 
       const eventRes = new EventEmittingResponse(
@@ -448,6 +449,9 @@ export function initializeMcpApiHandler(
           url: request.url,
           headers: request.headers,
           body: request.body,
+          auth: {
+            requestUrl: request.url
+          }
         });
 
         const syntheticRes = new EventEmittingResponse(
@@ -617,7 +621,7 @@ export function initializeMcpApiHandler(
       });
     } else {
       res.statusCode = 404;
-      res.end("Not found");
+      res.end(`Not found ${url.pathname}, allowed path list: ${[streamableHttpEndpoint, sseEndpoint, sseMessageEndpoint].join(", ")}`);
     }
   };
 }
@@ -629,6 +633,7 @@ interface FakeIncomingMessageOptions {
   headers?: IncomingHttpHeaders;
   body?: BodyType;
   socket?: Socket;
+  auth?: Record<string, string>
 }
 
 // Create a fake IncomingMessage
@@ -641,11 +646,12 @@ function createFakeIncomingMessage(
     headers = {},
     body = null,
     socket = new Socket(),
+    auth,
   } = options;
 
   // Create a readable stream that will be used as the base for IncomingMessage
   const readable = new Readable();
-  readable._read = (): void => {}; // Required implementation
+  readable._read = (): void => { }; // Required implementation
 
   // Add the body content if provided
   if (body) {
@@ -677,6 +683,8 @@ function createFakeIncomingMessage(
   // @ts-expect-error
   req.on = readable.on.bind(readable);
   req.pipe = readable.pipe.bind(readable);
+  // @ts-expect-error
+  req.auth = auth;
 
   return req;
 }
