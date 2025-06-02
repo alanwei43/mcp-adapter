@@ -450,7 +450,9 @@ export function initializeMcpApiHandler(
           headers: request.headers,
           body: request.body,
           auth: {
-            requestUrl: request.url
+            extra: {
+              requestUrl: request.url
+            }
           }
         });
 
@@ -633,7 +635,7 @@ interface FakeIncomingMessageOptions {
   headers?: IncomingHttpHeaders;
   body?: BodyType;
   socket?: Socket;
-  auth?: Record<string, string>
+  auth?: Record<string, unknown>
 }
 
 // Create a fake IncomingMessage
