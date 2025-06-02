@@ -1,6 +1,6 @@
 {
   "name": "nextjs-mcp-adapter",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "Vercel MCP Adapter for Next.js and other frameworks",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
