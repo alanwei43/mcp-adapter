@@ -140,6 +140,12 @@ export type Config = {
    * ```
    */
   nextAppBasePath?: string
+  onCreateSessionId?: (data: {
+    request: Request
+    requestUrl: string
+    requestQuery: Record<string, string>
+    sessionId: string
+  }) => void
   /**
    * Callback function that receives MCP events.
    * This can be used to track analytics, debug issues, or implement custom behaviors.
@@ -393,12 +399,14 @@ export function initializeMcpApiHandler(
       const endpointPath = sseTransportEndpoint || sseMessageEndpoint;
       const transport = new SSEServerTransport(endpointPath, res);
       const sessionId = transport.sessionId;
-      redis.setEx(`mcp:sse:${sessionId}`, 60 * 60 * 24, JSON.stringify({
-        startDate: new Date().toISOString(),
-        requestUrl: req.url,
-        requestQuery: Object.fromEntries(url.searchParams),
-        sessionId: sessionId,
-      }));
+      if (config.onCreateSessionId) {
+        config.onCreateSessionId({
+          request: req,
+          requestUrl: req.url,
+          requestQuery: Object.fromEntries(url.searchParams),
+          sessionId: sessionId,
+        });
+      }
 
       const eventRes = new EventEmittingResponse(
         createFakeIncomingMessage(),
