@@ -393,6 +393,12 @@ export function initializeMcpApiHandler(
       const endpointPath = sseTransportEndpoint || sseMessageEndpoint;
       const transport = new SSEServerTransport(endpointPath, res);
       const sessionId = transport.sessionId;
+      redis.setEx(`mcp:sse:${sessionId}`, 60 * 60 * 24, JSON.stringify({
+        startDate: new Date().toISOString(),
+        requestUrl: req.url,
+        requestQuery: Object.fromEntries(url.searchParams),
+        sessionId: sessionId,
+      }));
 
       const eventRes = new EventEmittingResponse(
         createFakeIncomingMessage(),
@@ -451,7 +457,7 @@ export function initializeMcpApiHandler(
           body: request.body,
           auth: {
             extra: {
-              requestUrl: request.url
+              requestUrl: url.toString()
             }
           }
         });
